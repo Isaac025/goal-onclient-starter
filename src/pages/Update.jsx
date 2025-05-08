@@ -6,13 +6,48 @@ import Loading from "../components/Loading";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
+import { axiosInstance } from "../axiosInstance";
 
 const Update = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [progress, setProgress] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const redirect = useNavigate();
+  const { goalId } = useParams();
+
+  useEffect(() => {
+    const getGoal = async () => {
+      const { data } = await axiosInstance(`/${goalId}`);
+      console.log(data);
+      setIsLoading(false);
+      setTitle(data.goal.title);
+      setDescription(data.goal.description);
+      setProgress(data.goal.progress);
+    };
+    getGoal();
+  }, [goalId]);
+
+  const handleUpdate = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const { data } = await axiosInstance.patch(`/${goalId}`, {
+        title,
+        description,
+        progress,
+      });
+      if (data.success) {
+        redirect("/all");
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error("You can not change to and existing title");
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <>
@@ -23,7 +58,7 @@ const Update = () => {
         <div className="container d-flex justify-content-between align-items-center mt-3 pb-3 gap-lg-2">
           <div className="main-form py-5 px-1 ps-lg-2 ps-xl-3 pe-xl-3 rounded-2">
             <ToastContainer />
-            <form className="create-form">
+            <form className="create-form" onSubmit={handleUpdate}>
               <div className="mt-2">
                 <input
                   type="text"
@@ -31,6 +66,7 @@ const Update = () => {
                   className="bg-transparent"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
+                  required
                 />
               </div>
               <div className="mt-5">
@@ -43,6 +79,7 @@ const Update = () => {
                   rows="10"
                   placeholder="Goal Description"
                   className="bg-transparent"
+                  required
                 ></textarea>
               </div>
               <div>
@@ -54,10 +91,13 @@ const Update = () => {
                   min="0"
                   max="100"
                   className="bg-transparent mt-2"
+                  required
                 />
               </div>
               <div className="mt-2">
-                <button className="blue-bg p-2">Update</button>
+                <button className="blue-bg p-2" disabled={isSubmitting}>
+                  {isSubmitting ? "Updating...." : "Update"}
+                </button>
               </div>
             </form>
           </div>
