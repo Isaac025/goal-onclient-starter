@@ -35,7 +35,7 @@ const Update = () => {
 
     try {
       const { data } = await axiosInstance.patch(`/${goalId}`, {
-        title,
+        title: title.toLowerCase(),
         description,
         progress,
       });
